@@ -1,0 +1,6 @@
+# وابستگی‌های اصلی برای اجرای RVC WebUI و Coqui TTS
+TTS
+numpy
+soundfile
+flask
+requests

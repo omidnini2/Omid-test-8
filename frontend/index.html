@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>کلون صدای فارسی با هوش مصنوعی</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+  <style>
+    body.dark { background: #222; color: #fff; }
+    .theme-toggle { float: left; }
+    .card { margin-bottom: 1rem; }
+    .lang-list { font-size: 0.95em; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="theme-toggle mb-3">
+      <button onclick="toggleTheme()" class="btn btn-secondary">تغییر تم</button>
+    </div>
+    <h1 class="mb-4">کلون صدای فارسی با هوش مصنوعی</h1>
+    <form id="voiceForm" enctype="multipart/form-data">
+      <div class="card p-3">
+        <label class="form-label">آپلود یا ضبط صدای خود (حداکثر ۲۰ دقیقه یا ۵۰ مگابایت):</label>
+        <input type="file" name="voice" accept="audio/*" class="form-control mb-2" required>
+        <button type="button" class="btn btn-outline-primary" onclick="startRecording()">ضبط صدا</button>
+        <audio id="recordedAudio" controls class="mt-2 d-none"></audio>
+      </div>
+      <div class="card p-3">
+        <label class="form-label">متن مورد نظر (حداکثر ۱۰۰,۰۰۰ کاراکتر):</label>
+        <textarea name="text" class="form-control" maxlength="100000" rows="5" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">تولید صدا</button>
+    </form>
+    <div id="result" class="mt-4"></div>
+    <div class="mt-4">
+      <h5>زبان‌های پشتیبانی‌شده:</h5>
+      <div class="lang-list">
+        فارسی، انگلیسی، عربی، فرانسوی، آلمانی، روسی، چینی، ژاپنی، اسپانیایی و ... (۹۹٪ زبان‌های دنیا)
+      </div>
+    </div>
+  </div>
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
+    // ضبط صدا
+    let mediaRecorder, audioChunks = [];
+    function startRecording() {
+      if (!navigator.mediaDevices) {
+        alert('مرورگر شما ضبط صدا را پشتیبانی نمی‌کند.');
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = document.getElementById('recordedAudio');
+            audio.src = audioUrl;
+            audio.classList.remove('d-none');
+            // قرار دادن فایل ضبط‌شده در input
+            const fileInput = document.querySelector('input[name="voice"]');
+            const dt = new DataTransfer();
+            dt.items.add(new File([audioBlob], 'recorded.wav'));
+            fileInput.files = dt.files;
+          };
+          mediaRecorder.start();
+          setTimeout(() => {
+            if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          }, 20 * 60 * 1000); // حداکثر ۲۰ دقیقه
+          alert('ضبط صدا آغاز شد. برای توقف، دوباره روی دکمه کلیک کنید.');
+        });
+    }
+    document.getElementById('voiceForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      document.getElementById('result').innerHTML = 'در حال پردازش...';
+      // اینجا باید به API خودتان (مثلاً PHP یا Node.js) درخواست بفرستید
+      // و خروجی صوتی را دریافت و نمایش دهید
+      // مثال:
+      // let res = await fetch('/api/clone-voice.php', { method: 'POST', body: formData });
+      // let blob = await res.blob();
+      // let url = URL.createObjectURL(blob);
+      // document.getElementById('result').innerHTML = `<audio controls src="${url}"></audio>
+      //   <a href="${url}" download="output.wav" class="btn btn-success mt-2">دانلود</a>`;
+      //   // اشتراک‌گذاری (در صورت پشتیبانی مرورگر)
+      //   if (navigator.share) {
+      //     document.getElementById('result').innerHTML += `<button class='btn btn-info mt-2' onclick='navigator.share({title:"صدای کلون‌شده من", url:"${url}"})'>اشتراک‌گذاری</button>`;
+      //   }
+    }
+  </script>
+</body>
+</html>
